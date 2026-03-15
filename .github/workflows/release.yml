@@ -1,52 +1,66 @@
 name: Release
-
 on:
   push:
-    tags:
-      - "v*.*.*"
+    branches:
+      - main
+
+  pull_request:
+    branches:
+      - main
+
+permissions:
+  contents: write
+  pull-requests: write
+  issues: write
 
 jobs:
   release:
-    name: Create GitHub Release
+    name: Release
     runs-on: ubuntu-latest
-
-    permissions:
-      contents: write
-
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout
+        uses: actions/checkout@v6
         with:
-          fetch-depth: 0  # needed for release notes generation
+          fetch-depth: 0
 
-      - name: Create GitHub Release
-        uses: softprops/action-gh-release@v2
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
         with:
-          generate_release_notes: true
-          body: |
-            ## Usage
+          node-version: "lts/*"
 
-            Reference any module from this release:
+      - name: Install semantic-release dependencies
+        run: |
+          npm install --no-save \
+            conventional-changelog-conventionalcommits
 
-            ```hcl
-            module "vm" {
-              source = "github.com/luciocarvalhojr/terraform-modules//modules/proxmox-vm?ref=${{ github.ref_name }}"
-              # ...
-            }
+      - name: Semantic Release (dry-run)
+        if: github.event_name == 'pull_request'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          npx semantic-release --dry-run
 
-            module "dns" {
-              source = "github.com/luciocarvalhojr/terraform-modules//modules/dns-record?ref=${{ github.ref_name }}"
-              # ...
-            }
+      - name: Semantic Release
+        if: github.event_name == 'push'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          npx semantic-release
 
-            module "node" {
-              source = "github.com/luciocarvalhojr/terraform-modules//modules/k3s-node?ref=${{ github.ref_name }}"
-              # ...
-            }
+      - name: Update floating tags
+        if: github.event_name == 'push'
+        run: |
+          VERSION=$(git describe --tags --abbrev=0)
+          CLEAN_VERSION=${VERSION#v}
+          
+          MAJOR=$(echo "$CLEAN_VERSION" | cut -d. -f1)
+          MINOR=$(echo "$CLEAN_VERSION" | cut -d. -f1,2)
 
-            module "bucket" {
-              source = "github.com/luciocarvalhojr/terraform-modules//modules/minio-bucket?ref=${{ github.ref_name }}"
-              # ...
-            }
-            ```
+          git config user.name "github-actions"
+          git config user.email "github-actions@github.com"
 
-            See [README](https://github.com/luciocarvalhojr/terraform-modules/blob/main/README.md) for full documentation.
+          git tag -f v$MAJOR
+          git push origin v$MAJOR --force
+
+          git tag -f v$MINOR
+          git push origin v$MINOR --force
