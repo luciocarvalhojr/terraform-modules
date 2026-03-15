@@ -52,7 +52,7 @@ jobs:
         run: |
           VERSION=$(git describe --tags --abbrev=0)
           CLEAN_VERSION=${VERSION#v}
-          
+
           MAJOR=$(echo "$CLEAN_VERSION" | cut -d. -f1)
           MINOR=$(echo "$CLEAN_VERSION" | cut -d. -f1,2)
 
