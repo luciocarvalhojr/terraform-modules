@@ -7,8 +7,8 @@ terraform {
       version = "~> 0.70"
     }
     technitium = {
-      source  = "clouddns/technitium"
-      version = ">= 1.0.0"
+      source  = "kenske/technitium"
+      version = ">= 0.2.2"
     }
   }
 }
