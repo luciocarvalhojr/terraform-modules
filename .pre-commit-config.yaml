@@ -1,0 +1,50 @@
+# Pre-commit hooks for Terraform modules
+#
+# Setup:
+#   brew install pre-commit tflint terraform-docs
+#   pre-commit install          # installs the git hook
+#
+# Run manually against all files:
+#   pre-commit run --all-files
+#
+# Update hooks to latest versions:
+#   pre-commit autoupdate
+
+default_stages: [pre-commit]
+
+repos:
+  # ─── General file hygiene ────────────────────────────────────────────────────
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v5.0.0
+    hooks:
+      - id: trailing-whitespace
+      - id: end-of-file-fixer
+      - id: check-merge-conflict
+      - id: check-added-large-files
+        args: [--maxkb=500]
+      - id: detect-private-key
+      - id: no-commit-to-branch
+        args: [--branch, main]
+
+  # ─── Secret leak detection ───────────────────────────────────────────────────
+  - repo: https://github.com/gitleaks/gitleaks
+    rev: v8.24.0
+    hooks:
+      - id: gitleaks
+
+  # ─── Terraform ───────────────────────────────────────────────────────────────
+  - repo: https://github.com/antonbabenko/pre-commit-terraform
+    rev: v1.99.0
+    hooks:
+      - id: terraform_fmt
+      - id: terraform_validate
+        args:
+          - --args=-no-color
+          - --hook-config=--retry-once-with-cleanup=true
+        exclude: ^examples/
+      - id: terraform_tflint
+        args:
+          - --args=--minimum-failure-severity=warning
+      - id: terraform_docs
+        args:
+          - --args=--lockfile=false

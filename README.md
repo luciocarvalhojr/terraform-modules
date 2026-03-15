@@ -170,14 +170,13 @@ source = "github.com/luciocarvalhojr/terraform-modules//modules/k3s-node?ref=v1.
 
 The `//` double-slash is Terraform's syntax for a subdirectory within a Git source.
 
-To release a new version:
+Releases are automated via [semantic-release](https://github.com/semantic-release/semantic-release). Push conventional commits to `main` and the CI pipeline will determine the next version, cut the tag, and publish the GitHub Release automatically.
 
-```bash
-git tag v1.1.0
-git push origin v1.1.0
-```
-
-GitHub Actions will automatically create the release with notes.
+| Commit prefix | Version bump |
+|---------------|-------------|
+| `fix:` | patch (`v1.0.1`) |
+| `feat:` | minor (`v1.1.0`) |
+| `feat!:` / `BREAKING CHANGE` | major (`v2.0.0`) |
 
 ---
 
@@ -186,7 +185,7 @@ GitHub Actions will automatically create the release with notes.
 | Workflow | Trigger | What it does |
 |----------|---------|--------------|
 | `validate.yml` | PR + push to main | `terraform fmt -check` + `terraform validate` on all modules and examples |
-| `release.yml` | Push of `v*.*.*` tag | Creates GitHub Release with usage snippet |
+| `release.yml` | Push to main | Runs semantic-release to cut a version tag and GitHub Release (dry-run on PRs) |
 
 ---
 
@@ -210,6 +209,22 @@ for dir in modules/*/; do
 done
 ```
 
+### Pre-commit hooks
+
+```bash
+# Install dependencies
+brew install pre-commit tflint terraform-docs
+
+# Install the git hook
+pre-commit install
+
+# Run against all files manually
+pre-commit run --all-files
+
+# Update hooks to latest versions
+pre-commit autoupdate
+```
+
 ---
 
 ## TODO — Before extracting to individual repos + Terraform Registry
@@ -226,7 +241,7 @@ before each module is ready to be published as a standalone repo on registry.ter
 - [ ] Add `CONTRIBUTING.md` with PR and branching conventions
 - [ ] Define and document minimum provider version compatibility matrix
 - [ ] Replace `count` patterns with `for_each` everywhere for safer plan diffs
-- [ ] Add pre-commit hooks (tflint, fmt, validate) via `.pre-commit-config.yaml`
+- [x] Add pre-commit hooks (tflint, fmt, validate) via `.pre-commit-config.yaml`
 
 ### Per-module checklist
 
