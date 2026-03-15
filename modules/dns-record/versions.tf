@@ -3,8 +3,8 @@ terraform {
 
   required_providers {
     technitium = {
-      source  = "clouddns/technitium"
-      version = ">= 1.0.0"
+      source  = "kenske/technitium"
+      version = ">= 0.2.2"
     }
   }
 }
