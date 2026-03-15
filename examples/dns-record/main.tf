@@ -5,12 +5,12 @@ module "dns" {
 
   a_records = [
     { name = "my-server", ip = "192.168.0.150" },
-    { name = "db-01",     ip = "192.168.0.151" },
+    { name = "db-01", ip = "192.168.0.151" },
   ]
 
   cname_records = [
     { name = "grafana", target = "my-server.home.lab" },
-    { name = "app",     target = "my-server.home.lab" },
+    { name = "app", target = "my-server.home.lab" },
   ]
 }
 

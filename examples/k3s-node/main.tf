@@ -32,8 +32,8 @@ module "k3s_controlplane" {
   tags           = ["controlplane"]
 
   cname_records = [
-    { name = "argocd",      target = "k3s-cp-01.home.lab" },
-    { name = "authentik",   target = "k3s-cp-01.home.lab" },
+    { name = "argocd", target = "k3s-cp-01.home.lab" },
+    { name = "authentik", target = "k3s-cp-01.home.lab" },
     { name = "observatory", target = "k3s-cp-01.home.lab" },
   ]
 }
