@@ -23,7 +23,7 @@ module "dns" {
   zone = var.dns_zone
 
   a_records = [
-    { name = var.name, ip = var.ip }
+    { name = "${var.name}.${var.dns_zone}", ip = var.ip }
   ]
 
   cname_records = var.cname_records
