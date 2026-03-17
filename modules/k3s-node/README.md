@@ -12,7 +12,26 @@ Internally calls:
 |------|---------|
 | terraform | >= 1.9.0 |
 | bpg/proxmox | ~> 0.70 |
-| clouddns/technitium | >= 1.0.0 |
+| kenske/technitium | >= 0.2.2 |
+
+## Provider configuration
+
+Both providers must be configured in the calling root module:
+
+```hcl
+provider "proxmox" {
+  endpoint = "https://192.168.0.x:8006/"
+  api_token = var.proxmox_api_token
+  insecure  = true
+}
+
+provider "technitium" {
+  host  = "http://192.168.0.x:5380"
+  token = var.technitium_token
+}
+```
+
+> **Note:** The `kenske/technitium` provider uses `host` and `token` — not `server` / `api_token`.
 
 ## Inputs
 
@@ -48,3 +67,32 @@ Internally calls:
 ## Example
 
 See [`examples/k3s-node/`](../../examples/k3s-node/main.tf) for a full cluster (1 controlplane + 3 workers using `for_each`).
+
+## Migration from `proxmox-vm`
+
+If you previously managed a VM with the `proxmox-vm` module and want to switch to `k3s-node` without destroying and recreating the VM, use a `moved` block to migrate the Terraform state.
+
+**Before (proxmox-vm):**
+
+```hcl
+module "my_node" {
+  source = "github.com/luciocarvalhojr/terraform-modules//modules/proxmox-vm?ref=v1.1.0"
+  # ...
+}
+```
+
+**After (k3s-node) with state migration:**
+
+```hcl
+module "my_node" {
+  source = "github.com/luciocarvalhojr/terraform-modules//modules/k3s-node?ref=v1.2.0"
+  # ...
+}
+
+moved {
+  from = module.my_node.proxmox_virtual_environment_vm.this
+  to   = module.my_node.module.vm.proxmox_virtual_environment_vm.this
+}
+```
+
+Without the `moved` block, Terraform will plan a **destroy + recreate** of the VM because the resource address changes when the source module changes.
