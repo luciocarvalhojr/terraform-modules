@@ -7,8 +7,20 @@ on:
       - main
 
 jobs:
+  secrets:
+    name: secret scan
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
   validate:
-    name: fmt + validate
+    name: fmt + validate + tflint + docs
     runs-on: ubuntu-latest
 
     steps:
@@ -18,10 +30,22 @@ jobs:
         with:
           terraform_version_file: .terraform-version
 
+      - uses: terraform-linters/setup-tflint@v4
+
+      - name: Init tflint plugins
+        run: tflint --init
+
+      - name: Install terraform-docs
+        run: |
+          curl -sSLo /tmp/terraform-docs.tar.gz \
+            https://github.com/terraform-docs/terraform-docs/releases/download/v0.19.0/terraform-docs-v0.19.0-linux-amd64.tar.gz
+          tar -xzf /tmp/terraform-docs.tar.gz -C /tmp
+          sudo mv /tmp/terraform-docs /usr/local/bin/terraform-docs
+
       - name: Check formatting
         run: terraform fmt -check -recursive
 
-      - name: Validate all modules
+      - name: Validate modules
         run: |
           for dir in modules/*/; do
             echo ""
@@ -32,13 +56,51 @@ jobs:
             terraform -chdir="$dir" validate
           done
 
-      - name: Validate all examples
+      - name: Validate examples
         run: |
           for dir in examples/*/; do
             echo ""
             echo "──────────────────────────────────────"
-            echo "→ Validating example: $dir"
+            echo "→ Validating: $dir"
             echo "──────────────────────────────────────"
             terraform -chdir="$dir" init -backend=false -input=false
             terraform -chdir="$dir" validate
           done
+
+      - name: tflint modules
+        run: |
+          for dir in modules/*/; do
+            echo ""
+            echo "──────────────────────────────────────"
+            echo "→ tflint: $dir"
+            echo "──────────────────────────────────────"
+            tflint --chdir="$dir" --minimum-failure-severity=warning
+          done
+
+      - name: tflint examples
+        run: |
+          for dir in examples/*/; do
+            echo ""
+            echo "──────────────────────────────────────"
+            echo "→ tflint: $dir"
+            echo "──────────────────────────────────────"
+            tflint --chdir="$dir" --minimum-failure-severity=warning
+          done
+
+      - name: Checkov security scan
+        uses: bridgecrewio/checkov-action@v12
+        with:
+          directory: modules
+          quiet: true
+          soft_fail: true
+
+      - name: Check terraform-docs
+        run: |
+          for dir in modules/*/; do
+            echo ""
+            echo "──────────────────────────────────────"
+            echo "→ terraform-docs: $dir"
+            echo "──────────────────────────────────────"
+            terraform-docs --lockfile=false "$dir"
+          done
+          git diff --exit-code

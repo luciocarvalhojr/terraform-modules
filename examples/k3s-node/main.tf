@@ -1,3 +1,7 @@
+terraform {
+  required_version = ">= 1.14.7"
+}
+
 locals {
   dns_zone     = "home.lab"
   proxmox_node = "hyper01"
