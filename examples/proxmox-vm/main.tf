@@ -1,3 +1,7 @@
+terraform {
+  required_version = ">= 1.14.7"
+}
+
 module "my_vm" {
   source = "../../modules/proxmox-vm"
 
