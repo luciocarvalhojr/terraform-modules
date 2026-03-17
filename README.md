@@ -87,8 +87,8 @@ module "dns" {
 **Provider config required:**
 ```hcl
 provider "technitium" {
-  server    = "http://192.168.0.x:5380"
-  api_token = var.technitium_api_token
+  host  = "http://192.168.0.x:5380"
+  token = var.technitium_token
 }
 ```
 
@@ -133,7 +133,7 @@ Provisions a K3s node end-to-end: creates the Proxmox VM and registers it in Tec
 
 ```hcl
 module "controlplane" {
-  source = "github.com/luciocarvalhojr/terraform-modules//modules/k3s-node?ref=v1.0.0"
+  source = "github.com/luciocarvalhojr/terraform-modules//modules/k3s-node?ref=v1.2.0"
 
   name           = "k3s-cp-01"
   vm_id          = 200
@@ -157,6 +157,22 @@ module "controlplane" {
 ```
 
 **Outputs:** `vm_id`, `name`, `ip`, `fqdn`, `mac_address`
+
+**Provider config required:**
+```hcl
+provider "proxmox" {
+  endpoint  = "https://192.168.0.x:8006/"
+  api_token = var.proxmox_api_token
+  insecure  = true
+}
+
+provider "technitium" {
+  host  = "http://192.168.0.x:5380"
+  token = var.technitium_token
+}
+```
+
+> **Note:** The `kenske/technitium` provider uses `host` and `token` — not `server` / `api_token`.
 
 ---
 
@@ -254,7 +270,7 @@ before each module is ready to be published as a standalone repo on registry.ter
 - [ ] Decide on UEFI vs BIOS boot variable
 
 #### `dns-record`
-- [ ] Verify `clouddns/technitium` provider schema matches current Technitium API version
+- [ ] Verify `kenske/technitium` provider schema matches current Technitium API version
 - [ ] Add support for PTR (reverse DNS) records
 - [ ] Add support for TXT records (useful for Let's Encrypt DNS-01 challenges)
 - [ ] Add `terraform test` with mock provider

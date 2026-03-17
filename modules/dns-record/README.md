@@ -7,16 +7,18 @@ Creates A and CNAME records in Technitium DNS. Supports multiple records per cal
 | Name | Version |
 |------|---------|
 | terraform | >= 1.9.0 |
-| clouddns/technitium | >= 1.0.0 |
+| kenske/technitium | >= 0.2.2 |
 
 ## Provider configuration
 
 ```hcl
 provider "technitium" {
-  server    = "http://192.168.0.x:5380"
-  api_token = var.technitium_api_token
+  host  = "http://192.168.0.x:5380"
+  token = var.technitium_token
 }
 ```
+
+> **Note:** The `kenske/technitium` provider uses `host` and `token` — not `server` / `api_token`.
 
 Get your API token from Technitium web UI → **Administration → Sessions → Create Token**.
 
